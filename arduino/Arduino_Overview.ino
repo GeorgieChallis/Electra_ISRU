@@ -1,9 +1,7 @@
 //Basic program flow for ISRU control (Arduino)
 
-// Updated: 10/02/2020, 16:11, GC
+// Updated: 11/02/2020, 19:39, GC
 
-
-// Changes: 
 //
 //
 //
@@ -37,27 +35,27 @@
 
 
 //Global Variables
-int numChars = 64;
-char receivedChars[64];
-bool newData = false;
+
+//Comms
+//Use these if only using simple command numbers
+char incomingChar = '0';
+String incomingString;
+String completeString;
+
+//removed - 11/2/20
+
+bool newCommand = false;
 char command;
 
+
+//outgoing
+uint8_t numVals;
+
+
+//Circuit control
 static bool magnetOn = true;
 static bool heaterOn= false;
 static bool electroOn = false;
-
-enum missionStates { 
-  idle, 
-  initialising, 
-  exploring, 
-  excavating, 
-  returning, 
-  melting, 
-  electrolysis, 
-  error
- };
-
-enum missionStates currentState;
 
 // Temperature probes
 double reactionTemp;
@@ -79,7 +77,7 @@ double servoRotation;
 
 //Set up is called once on start-up
 void setup(){
-  currentState = initialising;
+//  currentState = initialising;
   
   //Initialise Digital Pins
   pinMode(RED, OUTPUT);
@@ -91,55 +89,89 @@ void setup(){
   pinMode(ELECTRO, OUTPUT);
   
   pinMode(CAM_SERVO, OUTPUT);
-
-  
   
   //Red LED ON indicates power is present
   digitalWrite(RED, HIGH);
   
-  //Attempt communication with Pin
-  //Serial.begin(115200); //Start Serial comms
+  //Attempt communication with Pi
+  Serial.begin(115200); //Start Serial comms (baud rate)
+  Serial.read(); // to clear buffer
   
-  //If comms is good
-    // Switch LED ON
-    
-  //If comms is not good
-    // If this is attempt 1 or 2
-      // Try to connect again
-    //Return an error to the user, blink LED
-      
-    
-    
+  Serial.print("hello!");
+
+  incomingChar = Serial.read();
+  
+  while(incomingChar != '!'){
+      Serial.print("hello!");
+      digitalWrite(ORANGE, HIGH);
+      delay(250);
+      digitalWrite(ORANGE,LOW);
+      incomingChar = Serial.read();
+      delay(250);
+  }
+
+  
+  //Gets to here once hello! is received
+  digitalWrite(RED, LOW);
+  digitalWrite(GREEN, HIGH); 
 
 }
 
 //Loop operates continuously when the program runs
 void loop(){
-  UpdateValues();
-  //Receive Data
-  command = recvCommands();
-  //Act on Request
-  sendReply(command);
-  //Send full packet of info based on state
-  sendAllData();
+    //Get the most recent sensor values
+    UpdateValues();
+
+    
+    //Receive Data
+    while(Serial.available() && !newCommand){
+       incomingChar = Serial.read();
+       if (incomingChar == ';'){
+         completeString = incomingString;
+         if(command = completeString.toInt()){
+          newCommand = true; 
+          digitalWrite(ORANGE, HIGH);
+         }
+         incomingString = "";
+        }
+       
+       else {
+        if (isDigit(incomingChar)){
+          incomingString += incomingChar;
+         }
+       }
+    }
+    Serial.println(incomingString);
+
+    //Process request
+    if(newCommand){
+        processCommands(command);
+        newCommand = false;
+        digitalWrite(ORANGE, LOW);
+    }
+    
+    if (command != 1 && command != 2){
+    //Send full packet of info
+    sendAllData();
+    }
 }
 
+
+
+
+
 void UpdateValues(){
-  //Get ALL currently required values from sensors being used
+  //Get ALL currently required values from sensors being used, regardless of state
   
   getBatteryCurrent(); //Always Needed
   getBatteryVoltage(); //Always Needed
-  
-  if (currentState > 3) {
-      getMeltingTemp();  //Needed for melting, electrolysis
-  }
-  else if (currentState > 4){
-    getReactionTemp(); //Needed for electrolysis
-    getHydrogenPPM(); //Needed for electrolysis
-    getGasFlow(); //Needed for electrolysis
-  }
-
-
+  getBusVoltage(); //Always needed
+  getSolarCurrent(); //Always needed?
+  getElectroCurrent(); //Always needed? Maybe not though..?
+  getMeltingTemp();  //Needed for melting, electrolysis
+  getReactionTemp(); //Needed for electrolysis
+  getHydrogenPPM(); //Needed for electrolysis
+  getGasFlow(); //Needed for electrolysis
 }
   
   
@@ -147,11 +179,124 @@ void UpdateValues(){
 
 
 
-int recvCommands(){
+void processCommands(int command){
   //Get the command number from the data sent
-  //Char to int
-  
-  return 0;
+  switch(command){
+    case'0':
+       // Whoops, you done messed up... flash the orange LED!
+       flashLED(ORANGE);
+       break;
+
+    case 1:
+       // Get status of the board
+       // ***
+       // Send Command number and TRUE (2 bytes)
+       break;
+
+     case 2:
+       // Get all data available
+       sendAllData(); //***
+       break;
+
+     case 3:
+       // Switch magnet
+       switchFunction(MAGNET);
+       magnetOn = !magnetOn;
+       break;
+
+     case 4:
+      // Switch heater
+      switchFunction(HEATER);
+      heaterOn = !heaterOn;
+      break;
+
+      case 5:
+      // Switch Electrolysis
+      switchFunction(ELECTRO);
+      electroOn = !electroOn;
+      break;
+
+      case 6:
+      // Switch Red LED
+      switchFunction(RED);
+      break;
+
+      case 7:
+      //Switch Orange LED
+      switchFunction(ORANGE);
+      break;
+
+      case 8:
+      //Switch Green LED
+      switchFunction(GREEN);
+      break;
+
+      case 9:
+      //Get Magnet status
+      //***
+      break;
+
+      case 10:
+      //Get heater status
+      //**
+      break;
+
+      case 11:
+      //Get electrolysis status
+      //**
+      break;
+
+      case 12:
+      //Get reaction temperature
+      //**
+      break;
+
+      case 13:
+      //Get melting temperature
+      //**
+      break;
+
+      case 14:
+      //Get battery current
+      //**
+      break;
+
+      case 15:
+      //Get battery voltage
+      //**
+      break;
+
+      case 16:
+      //Get bus voltage
+      //**
+      break;
+
+      case 17:
+      //Get electrolysis current
+      //**
+      break;
+
+      case 18:
+      //Get solar panel current
+      //**
+      break;
+
+      case 19:
+      //Get hydrogen ppm
+      //**
+      break;
+
+      case 20:
+      //Get gas flow
+      //**
+      break;
+    
+      default:
+        //WHOOPS AGAIN
+        flashLED(ORANGE);
+        break;
+    }
+
 }
 
 void sendReply(char command){
@@ -165,64 +310,24 @@ void sendAllData(){
 // CIRCUIT CONTROL - OUTPUTS ------------------------------------------------------
 
 
-int setMagnet(boolean state){
-//Switch the Magnet circuit OFF or ON (0 or 1)
+void flashLED(int pin){
+  digitalWrite(pin, HIGH);
+  delay(500);
+  digitalWrite(pin, LOW);
+  delay(500);
+  digitalWrite(pin, HIGH);
+  delay(500);
+  digitalWrite(pin, LOW);
+  delay(500);
+}
 
-  //If trying to switch the magnet OFF
-  if(state == false){
-    if(magnetOn == true){
-      digitalWrite(MAGNET, LOW);
-      magnetOn = false;
-      return 0;
-    }
-    else {
-      return -1;
-    }
-  }
-  
-  //If trying to switch the magnet ON
-  if (state == true){
-    if(magnetOn == false){
-      digitalWrite(MAGNET, HIGH);
-      magnetOn = true;
-      return 0;
-    }
-    else {
-      return -1;
-    }
-  }
+void switchFunction(int pin){
+//Invert digital pin state - switch OFF if ON, vice versa
+  digitalWrite(pin, !digitalRead(pin));
 }
 
 
-int setHeater(boolean state){
-//Switch the Heater circuit ON or OFF (1 or 0)
-
-  //If trying to switch the heater ON
-  if (state == true) {  
-    if (heaterOn == false) {
-      digitalWrite(HEATER, HIGH);
-      heaterOn = true;
-      return 0;
-    }
-    else {  
-      return -1; //Heater is already ON so has not changed - error
-    }
-  }
-  
-  //If trying to switch the heater OFF
-  else if (state == false){
-    if(heaterOn == true){
-      digitalWrite(HEATER, LOW);
-      heaterOn = false;
-      return 0;
-    }
-    else{
-      return -1;
-    }
-  }
-}
-
-int setElectrolysis(boolean state){
+/*int setElectrolysis(boolean state){
 //Switch the Electrolysis circuit ON or OFF (1 or 0)
 
   //If trying to switch the  ON
@@ -248,7 +353,7 @@ int setElectrolysis(boolean state){
       return -1;
     }
   }
-}
+}*/
 
 //int moveCamServo{
   //Move the servo for the planet-cam 
@@ -287,6 +392,26 @@ double getBatteryVoltage(){
 
   return 0.0;
 }
+
+double getBusVoltage(){
+ // Read value from bus voltmeter
+
+   return 0.0;
+}
+
+double getSolarCurrent(){
+ // Read current value from solar panel ammeter  
+
+  return 0.0;
+}
+
+double getElectroCurrent(){
+ // Get current value across electrodes 
+ 
+  return 0.0;  
+}
+
+
 
 double getHydrogenPPM(){
 //Read the ppm of Hydrogen produced at the ISRU output
