@@ -1,6 +1,6 @@
 //Basic program flow for ISRU control (Arduino)
 
-// Updated: 11/02/2020, 19:39, GC
+// Updated: 25/02/2020, 19:39, GC
 
 //
 //
@@ -22,8 +22,8 @@
 #define CAM_SERVO 12
 
 //Analogue
-#define H2 0
-#define FLOW 1
+#define H2 0 //May not be needed
+#define FLOW 1 //May not be needed
 #define REACT_TEMP 2
 #define MELT_TEMP 3
 
@@ -42,12 +42,17 @@ char incomingChar = '0';
 String incomingString;
 String completeString;
 
-//removed - 11/2/20
-
 bool newCommand = false;
 char command;
 
+// Return message: XX,XX,[][][][]...;
+struct returnMessage{
+  uint8_t commandRecvd;
+  uint8_t  numValsReturned;
+  //byte data[];
+};
 
+static struct returnMessage myMessageOut;
 //outgoing
 uint8_t numVals;
 
@@ -60,6 +65,8 @@ static bool electroOn = false;
 // Temperature probes
 double reactionTemp;
 double heaterTemp;
+int R1; //Voltage divider resistor value - reaction
+int R2; //Voltage divider resistor value - heaters
 
 // Voltage/ current monitoring
 double batteryCurrent;
@@ -119,11 +126,11 @@ void setup(){
 
 //Loop operates continuously when the program runs
 void loop(){
-    //Get the most recent sensor values
+    //-----Get the most recent sensor values
     UpdateValues();
 
     
-    //Receive Data
+    //----------Receive Data
     while(Serial.available() && !newCommand){
        incomingChar = Serial.read();
        if (incomingChar == ';'){
@@ -143,17 +150,17 @@ void loop(){
     }
     Serial.println(incomingString);
 
-    //Process request
+    //--------Process request
     if(newCommand){
         processCommands(command);
         newCommand = false;
         digitalWrite(ORANGE, LOW);
     }
     
-    if (command != 1 && command != 2){
-    //Send full packet of info
+/*    if (command != 1 && command != 2){
+    //--------Send full packet of info
     sendAllData();
-    }
+    }*/
 }
 
 
@@ -166,141 +173,161 @@ void UpdateValues(){
   getBatteryCurrent(); //Always Needed
   getBatteryVoltage(); //Always Needed
   getBusVoltage(); //Always needed
+  
   getSolarCurrent(); //Always needed?
   getElectroCurrent(); //Always needed? Maybe not though..?
+  
   getMeltingTemp();  //Needed for melting, electrolysis
-  getReactionTemp(); //Needed for electrolysis
-  getHydrogenPPM(); //Needed for electrolysis
-  getGasFlow(); //Needed for electrolysis
+  
+  getReactionTemp(); //Needed for electrolysis 
+  getHydrogenPPM(); //Needed for electrolysis *TBC*
+  getGasFlow(); //Needed for electrolysis *TBC*
 }
   
   
-
-
-
-
 void processCommands(int command){
   //Get the command number from the data sent
   switch(command){
     case'0':
-       // Whoops, you done messed up... flash the orange LED!
+       // Whoops, you messed up... flash the orange LED!
        flashLED(ORANGE);
        break;
 
     case 1:
-       // Get status of the board
-       // ***
+       // Get comms status of the board
        // Send Command number and TRUE (2 bytes)
+       sendReply(command);
        break;
 
      case 2:
        // Get all data available
-       sendAllData(); //***
+       sendReply(command);
+      // sendAllData(); //***
        break;
 
      case 3:
        // Switch magnet
        switchFunction(MAGNET);
        magnetOn = !magnetOn;
+       sendReply(command);
        break;
 
      case 4:
       // Switch heater
       switchFunction(HEATER);
       heaterOn = !heaterOn;
+      sendReply(command);
       break;
 
       case 5:
       // Switch Electrolysis
       switchFunction(ELECTRO);
       electroOn = !electroOn;
+      sendReply(command);
       break;
 
       case 6:
       // Switch Red LED
       switchFunction(RED);
+      sendReply(command);
       break;
 
       case 7:
       //Switch Orange LED
       switchFunction(ORANGE);
+      sendReply(command);
       break;
 
       case 8:
       //Switch Green LED
       switchFunction(GREEN);
+      sendReply(command);
       break;
 
       case 9:
       //Get Magnet status
       //***
+      sendReply(command);
       break;
 
       case 10:
       //Get heater status
       //**
+      sendReply(command);
       break;
 
       case 11:
       //Get electrolysis status
       //**
+      sendReply(command);
       break;
 
       case 12:
       //Get reaction temperature
-      //**
+      getReactionTemp();
+      sendReply(command);
       break;
 
       case 13:
       //Get melting temperature
-      //**
+      getMeltingTemp();
+      sendReply(command);
       break;
 
       case 14:
       //Get battery current
       //**
+      sendReply(command);
       break;
 
       case 15:
       //Get battery voltage
       //**
+      sendReply(command);
       break;
 
       case 16:
       //Get bus voltage
       //**
+      sendReply(command);
       break;
 
       case 17:
       //Get electrolysis current
       //**
+      sendReply(command);
       break;
 
       case 18:
       //Get solar panel current
       //**
+      sendReply(command);
       break;
 
       case 19:
-      //Get hydrogen ppm
+      //Get hydrogen ppm - TBC
       //**
+      sendReply(command);
       break;
 
       case 20:
-      //Get gas flow
+      //Get gas flow - TBC
       //**
+      sendReply(command);
       break;
     
       default:
-        //WHOOPS AGAIN
+        //Unexpected command number -> error
         flashLED(ORANGE);
         break;
     }
 
 }
 
-void sendReply(char command){
+void sendReply(int command){
   //Send back acknowledge of command number and data, if necessary
+  myMessageOut.commandRecvd = command;
+  myMessageOut.numValsReturned = 0;
 }
 
 void sendAllData(){
@@ -325,65 +352,31 @@ void switchFunction(int pin){
 //Invert digital pin state - switch OFF if ON, vice versa
   digitalWrite(pin, !digitalRead(pin));
 }
-
-
-/*int setElectrolysis(boolean state){
-//Switch the Electrolysis circuit ON or OFF (1 or 0)
-
-  //If trying to switch the  ON
-  if (state == true) {  
-    if (electroOn == false) {
-      digitalWrite(ELECTRO, HIGH);
-      electroOn = true;
-      return 0;
-    }
-    else {  
-      return -1; //Electrolysis is already ON so has not changed - error
-    }
-  }
   
-  //If trying to switch the heater OFF
-  else if (state == false){
-    if(electroOn == true){
-      digitalWrite(ELECTRO, LOW);
-      electroOn = false;
-      return 0;
-    }
-    else{
-      return -1;
-    }
-  }
-}*/
-
-//int moveCamServo{
-  //Move the servo for the planet-cam 
-  //if move executed okay...
-  //return 0;
-  //if it didn't work:
-    //return -1;
-//}
-  
-
-
 
 // SENSOR DATA - INPUTS ---------------------------------------------------
   
 double getReactionTemp(){
 // Read the temperature value of the reaction temperature probe
-
+    //Thermistor and probe are set up in Voltage divider config, 
+    //so need to convert change in resistance/voltage to temperature
+        R1 = 10000; // Other resistor value arbitrarily set to 10kohm
+        
   return 0.0;
  
 }
 
 double getMeltingTemp(){
 // Read the temperature value of the filter temperature probe
-
+    //Voltage divider used as above
+    R2 = 10000; //Rough estimate for 10kohm resistor value
+    
   return 0.0;
 }
 
 double getBatteryCurrent(){
 // Read the current from the ammeter on the ISRU battery
-
+  
   return 0.0;
 }
 
