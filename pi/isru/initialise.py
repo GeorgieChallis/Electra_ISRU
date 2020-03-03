@@ -39,15 +39,38 @@ def init_arduino():
 
 # Init ISRU as server - listen to port 8000
 def init_socket():
-    my_ssocket = socket.socket()
-    port = 8000
-    my_ssocket.bind(('', port)) #pass ip address into empty string when we've confirmed rover/gs
-    my_ssocket.listen(3) 
+    HOST ="192.168.43.50"
+    PORT = 9000
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    print ('Socket created')
 
-    while True: 
-        client, address = my_ssocket.accept()
-        client.send('hi!')
-        client.close() 
+    s.bind((HOST, PORT))
+
+    s.listen(5)
+    print ('Socket awaiting messages')
+    (conn, addr) = s.accept()
+    print ('Connected')
+
+    # awaiting for message
+    while True:
+        data = conn.recv(1024)
+        print ('Following received: ' + data.decode('utf-8'))
+        reply = ''
+        data.decode('utf-8')
+        # process your message
+        if data == 'Test':
+            reply = 'Test Succesful!'
+        elif data == 'command01':
+            reply = 'Executing Command'
+        elif data == 'Terminate':
+            conn.send('Terminating')
+            break
+        else:
+            reply = 'Unknown command'
+
+        # Sending reply
+        conn.send(reply.encode('utf-8'))
+    conn.close()
 
 arduino_thread = threading.Thread(target=init_arduino)
 socket_thread = threading.Thread(target=init_socket)
