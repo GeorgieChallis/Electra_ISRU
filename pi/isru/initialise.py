@@ -7,6 +7,7 @@ import sys
 # Initialise Arduino Comms
 arduino_ok = False
 data = ""
+transmission = ""
 
 def init_arduino():
     global arduino_ok
@@ -36,9 +37,16 @@ def init_arduino():
             print(data)
             data = ""
             arduino_ok = True
+    while arduino_ok == True():
+        msg = transmission
+        my_serial.write(msg.encode('utf-8'))
+        time.sleep(0.5)
+        data = ""
 
 # Init ISRU as server - listen to port 8000
 def init_socket():
+    global transmission
+
     HOST ="192.168.43.50"
     PORT = 9000
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -50,26 +58,28 @@ def init_socket():
     print ('Socket awaiting messages')
     (conn, addr) = s.accept()
     print ('Connected')
-
-    # awaiting for message
     while True:
         data = conn.recv(1024)
         print ('Following received: ' + data.decode('utf-8'))
         reply = ''
         data.decode('utf-8')
         # process your message
-        if data == 'Test':
-            reply = 'Test Succesful!'
-        elif data == 'command01':
-            reply = 'Executing Command'
-        elif data == 'Terminate':
+        if data == '1':
+            reply = 'Command 1'
+        elif data == '2':
+            reply = 'Command 2'
+        elif data == '3':
+            reply = 'Command 3'
+            transmission = 3
+        elif data == '0':
             conn.send('Terminating')
             break
         else:
-            reply = 'Unknown command'
+            reply = data
 
         # Sending reply
-        conn.send(reply.encode('utf-8'))
+        
+        conn.send(repr(reply).encode('utf-8'))
     conn.close()
 
 arduino_thread = threading.Thread(target=init_arduino)
@@ -85,3 +95,4 @@ arduino_thread.join()
 socket_thread.join()
 
 # mission GO
+    # awaiting for messagelsdef 
