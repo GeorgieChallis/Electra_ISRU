@@ -7,7 +7,7 @@ s.connect((HOST,PORT))
 
 while True:
 	command = input("Enter Command: ")
-	s.send(command.encode('utf-8'))
+	s.send(str(command).encode('utf-8'))
 	reply = s.recv(1024).decode('utf-8')
 	if reply == 'Terminating':
 		break

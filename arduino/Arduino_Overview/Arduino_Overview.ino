@@ -22,8 +22,8 @@
 #define CAM_SERVO 12
 
 //Analogue
-#define H2 0 //May not be needed
-#define FLOW 1 //May not be needed
+//#define H2 0
+//#define FLOW 1 
 #define REACT_TEMP 2
 #define MELT_TEMP 3
 
@@ -34,7 +34,7 @@
 #define SOLAR_CURRENT 8
 
 
-//Global Variables
+//Global Variables -----------------------------
 
 //Comms
 //Use these if only using simple command numbers
@@ -63,9 +63,18 @@ static bool heaterOn= false;
 static bool electroOn = false;
 
 // Temperature probes
-double reactionTemp;
-double heaterTemp;
+float reactionTemp;
+float coeffA1 = 2.1085081e-03; //Steinhart-Hart A,B,C Coefficients (thermistor)
+float coeffB1 = 0.7979204e-04;
+float coeffC1 = 6.5350763e-07; 
+int reactionVIn; // Voltage in from thermistor changes
+float reactionR; //thermistor resistance
 int R1; //Voltage divider resistor value - reaction
+
+double heaterTemp;
+double coeffA2; //Steinhart-Hart A,B,C Coefficients (thermistor)
+double coeffB2;
+double coeffC2; 
 int R2; //Voltage divider resistor value - heaters
 
 // Voltage/ current monitoring
@@ -76,8 +85,8 @@ double solarCurrent;
 double electroCurrent;
 
 // Gas monitoring
-double hydrogenPPM;
-double gasFlow;
+//double hydrogenPPM;
+//double gasFlow;
 
 //camera servo
 double servoRotation;
@@ -180,8 +189,6 @@ void UpdateValues(){
   getMeltingTemp();  //Needed for melting, electrolysis
   
   getReactionTemp(); //Needed for electrolysis 
-  getHydrogenPPM(); //Needed for electrolysis *TBC*
-  getGasFlow(); //Needed for electrolysis *TBC*
 }
   
   
@@ -358,11 +365,14 @@ void switchFunction(int pin){
   
 double getReactionTemp(){
 // Read the temperature value of the reaction temperature probe
-    //Thermistor and probe are set up in Voltage divider config, 
-    //so need to convert change in resistance/voltage to temperature
-        R1 = 10000; // Other resistor value arbitrarily set to 10kohm
-        
-  return 0.0;
+  //need to convert change in resistance/voltage to temperature
+  R1 = 10000; // Other resistor value set to 10kohm
+  reactionVIn = analogRead(REACT_TEMP);
+  reactionR = R1*(1023.0 / (float)reactionVIn - 1.0);
+  float logrR = log(reactionR);
+  reactionTemp = 1.0 / (coeffA1 + coeffB1*logrR + coeffC1*logrR*logrR*logrR);  // Steinhart and Hart
+  reactionTemp = reactionTemp - 273.15; //Kelvin to Celsius
+  return reactionTemp;
  
 }
 
@@ -405,18 +415,9 @@ double getElectroCurrent(){
 }
 
 
-
-double getHydrogenPPM(){
-//Read the ppm of Hydrogen produced at the ISRU output
-
-  return 0.0;
-}
-
-double getGasFlow(){
-//Read the flow (cm/s?) of the gas sensor at the ISRU output
-
-  return 0.0;
-}
+//No longer used ---------------------
+double getHydrogenPPM(){ return 0.0;}
+double getGasFlow(){ return 0.0;}
 
   
   
