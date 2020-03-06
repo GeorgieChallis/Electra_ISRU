@@ -9,6 +9,9 @@ import threading
 class Listener(threading.Thread):
 
     def __init__(self, recievedQueue, port=9001):
+        super(Listener, self).__init__()
+        self.stopThread = False
+
         self.host = '127.0.0.1'
         self.port = port
         self.recievedQueue = recievedQueue
@@ -21,7 +24,9 @@ class Listener(threading.Thread):
 
     def create_logger(self):
         '''
-
+        Creates and configures a logger object instance
+        for writing formatted log messages to the
+        standard output stream.
         '''
         # Create logger object instance
         logger = logging.getLogger('ISRU.adapter.listener')
@@ -118,7 +123,7 @@ class Listener(threading.Thread):
         self.listening = True
         self.logger.info("Listening for connections on {0}:{1}...".format(self.host, self.port))
 
-        while(self.listening):
+        while self.listening and not self.stopThread:
             # Listen for incomming connections 
             self.accept_connections()
 
@@ -127,6 +132,13 @@ class Listener(threading.Thread):
 
         self.connection.close()
         self.server.close()
+
+    
+    def stop(self):
+        '''
+        Causes the thread to complete execution and stop.
+        '''
+        self.stopThread = True
 
 
 if __name__ == "__main__":
