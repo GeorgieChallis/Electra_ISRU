@@ -1,10 +1,6 @@
 //Basic program flow for ISRU control (Arduino)
 
-// Updated: 25/02/2020, 19:39, GC
-
-//
-//
-//
+// Updated: 06/03/2020, 18:31, GC/FG
 
 //-------------------------------------------------------------
 
@@ -41,6 +37,7 @@
 char incomingChar = '0';
 String incomingString;
 String completeString;
+bool initialise = false;
 
 bool newCommand = false;
 char command;
@@ -112,8 +109,6 @@ void setup(){
   //Attempt communication with Pi
   Serial.begin(115200); //Start Serial comms (baud rate)
   Serial.read(); // to clear buffer
-  
-  Serial.print("hello!");
 
   incomingChar = Serial.read();
   
@@ -125,7 +120,7 @@ void setup(){
       incomingChar = Serial.read();
       delay(250);
   }
-
+  initialise = true;
   
   //Gets to here once hello! is received
   digitalWrite(RED, LOW);
@@ -138,9 +133,8 @@ void loop(){
     //-----Get the most recent sensor values
     UpdateValues();
 
-    
     //----------Receive Data
-    while(Serial.available() && !newCommand){
+    while(Serial.available() && !newCommand && initialise){
        incomingChar = Serial.read();
        if (incomingChar == ';'){
          completeString = incomingString;
@@ -157,12 +151,12 @@ void loop(){
          }
        }
     }
-    Serial.println(incomingString);
 
     //--------Process request
     if(newCommand){
         processCommands(command);
         newCommand = false;
+        command = 0;
         digitalWrite(ORANGE, LOW);
     }
     
@@ -173,9 +167,6 @@ void loop(){
 }
 
 
-
-
-
 void UpdateValues(){
   //Get ALL currently required values from sensors being used, regardless of state
   
@@ -184,7 +175,7 @@ void UpdateValues(){
   getBusVoltage(); //Always needed
   
   getSolarCurrent(); //Always needed?
-  getElectroCurrent(); //Always needed? Maybe not though..?
+  getElectroCurrent(); //Always needed? 
   
   getMeltingTemp();  //Needed for melting, electrolysis
   
@@ -271,7 +262,7 @@ void processCommands(int command){
 
       case 12:
       //Get reaction temperature
-      getReactionTemp();
+      reactionTemp = getReactionTemp();
       sendReply(command);
       break;
 
@@ -328,13 +319,12 @@ void processCommands(int command){
         flashLED(ORANGE);
         break;
     }
-
 }
 
 void sendReply(int command){
   //Send back acknowledge of command number and data, if necessary
-  myMessageOut.commandRecvd = command;
-  myMessageOut.numValsReturned = 0;
+  //myMessageOut.commandRecvd = command;
+  //myMessageOut.numValsReturned = 0;
 }
 
 void sendAllData(){
