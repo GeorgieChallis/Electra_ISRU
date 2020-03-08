@@ -108,6 +108,7 @@ class ISRUAdapter():
             while True:
                 if not self.recievedQueue.empty():
                     transmission = self.recievedQueue.get()
+                    print(transmission)
                     # TODO: apply routing rules for transmission
 
         except KeyboardInterrupt:

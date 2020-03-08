@@ -3,6 +3,7 @@ import ssl
 import time
 import json
 import queue
+import select
 import socket
 import logging
 import traceback
@@ -70,6 +71,7 @@ class Writer(threading.Thread):
         # if connection fails, tries again in 5 seconds
         while not self.connection_alive:
             try:
+                self.logger.info("Attempting to connect to {0}:{1}...".format(self.host, self.port))
                 sslSocket.connect((self.host, self.port))
                 self.logger.info("Connection established with {0}:{1}.".format(self.host, self.port))
                 self.connection_alive = True
@@ -102,11 +104,18 @@ class Writer(threading.Thread):
                     # Convert string to bytes, append \n ternination character
                     transmissionBytes = str.encode(transmissionStr + '\n')
                     # Send transmission to server
-                    res = self.connection.sendall(transmissionBytes)  
-                    # Raise exception if result of send operation is invalid
-                    if res is not None: raise IOError("Failed to send complete mesage to server.")
+                    self.connection.sendall(transmissionBytes)  
+                    
+                    # Check for response, timeout set to 5 seconds
+                    self.connection.setblocking(0)
+                    ready = select.select([self.connection], [], [], 5)
+                    if ready[0]:
+                        response = self.connection.read(2048)
+                        if response != str.encode('recieved\n'):
+                            raise Exception('Unexpected response back from server: {0}'.format(response))
 
-                    # TODO: check for recieved response
+                    self.connection.setblocking(1)
+                    break
 
                 except Exception as ex:
                     retryCount += 1
@@ -156,6 +165,16 @@ class Writer(threading.Thread):
 # Test harness
 if __name__ == "__main__":
     broadcastQueue = queue.Queue()
-    client = Writer('127.0.0.1', 9001, broadcastQueue)
-    broadcastQueue.put("Testing broadcast ability")
-    client.run()
+    writerThread = Writer('127.0.0.1', 9000, broadcastQueue)
+    writerThread.setName('ISRU Writer')
+    writerThread.start()
+
+    time.sleep(1)
+
+    broadcastQueue.put({
+        'id': 'test_message',
+        'payload': {
+            'message': 'testing the writer'
+        }
+    })
+    

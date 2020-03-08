@@ -1,5 +1,7 @@
 import sys
 import ssl
+import time
+import json
 import queue
 import socket
 import logging
@@ -94,6 +96,7 @@ class Listener(threading.Thread):
                     raise Exception("Invalid Certificate: the connections certificate is not trusted.")
 
                 self.connection = sslSocket
+                self.logger.info("Accepted connection from: {0}".format(sslSocket.getpeername()))
 
             except ssl.SSLError as sslEx:
                 self.logger.error("Failed to accept incomming connection: an SSL error occured: {0}".format(str(sslEx)))
@@ -111,10 +114,9 @@ class Listener(threading.Thread):
         recieved queue for further usage outside the 
         server.
         '''
-        data = self.connection.read(4096)
-        message = str(data)
-        self.logger.info('recieved: ' + message)
-        self.connection.write(data)
+        transmission = self.connection.read(4096).decode("utf-8")
+        self.recievedQueue.put(json.loads(transmission))
+        self.connection.sendall(str.encode('recieved\n'))
 
 
     def run(self):
@@ -141,7 +143,16 @@ class Listener(threading.Thread):
         self.stopThread = True
 
 
+# Test harness
 if __name__ == "__main__":
     recievedQueue = queue.Queue()
-    server = Listener(recievedQueue)
-    server.run()
+    listenerThread = Listener(recievedQueue)
+    listenerThread.setName('ISRU Listener')
+    listenerThread.start()
+
+    time.sleep(1)
+
+    while(True):
+        if not recievedQueue.empty():
+            print(json.dumps(recievedQueue.get()))
+    
