@@ -28,7 +28,7 @@
 #define BUS_VOLTAGE 6
 #define ELECTRO_CURRENT 7
 #define SOLAR_CURRENT 8
-
+#define LIGHT_LEVEL A11
 
 //Global Variables -----------------------------
 
@@ -73,6 +73,8 @@ double coeffA2; //Steinhart-Hart A,B,C Coefficients (thermistor)
 double coeffB2;
 double coeffC2; 
 int R2; //Voltage divider resistor value - heaters
+
+int LDRval;
 
 // Voltage/ current monitoring
 double batteryCurrent;
@@ -221,6 +223,7 @@ void processCommands(int command){
       // Switch Electrolysis
       switchFunction(ELECTRO);
       electroOn = !electroOn;
+      Serial.print(electroOn);
       sendReply(command);
       break;
 
@@ -313,6 +316,12 @@ void processCommands(int command){
       //**
       sendReply(command);
       break;
+
+      case 21:
+      //Get light level
+      LDRval = analogRead(LIGHT_LEVEL);
+      Serial.println(LDRval);
+      break;
     
       default:
         //Unexpected command number -> error
@@ -362,6 +371,7 @@ double getReactionTemp(){
   float logrR = log(reactionR);
   reactionTemp = 1.0 / (coeffA1 + coeffB1*logrR + coeffC1*logrR*logrR*logrR);  // Steinhart and Hart
   reactionTemp = reactionTemp - 273.15; //Kelvin to Celsius
+  //Serial.print(reactionTemp);
   return reactionTemp;
  
 }
