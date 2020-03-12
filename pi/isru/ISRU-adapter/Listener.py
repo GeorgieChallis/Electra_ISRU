@@ -14,7 +14,7 @@ class Listener(threading.Thread):
         super(Listener, self).__init__()
         self.stopThread = False
 
-        self.host = '127.0.0.1'
+        self.host = '0.0.0.0'
         self.port = port
         self.recievedQueue = recievedQueue
         self.logger = self.create_logger()
