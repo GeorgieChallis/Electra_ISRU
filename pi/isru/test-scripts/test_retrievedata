@@ -1,0 +1,43 @@
+from __future__ import print_function
+import glob
+import struct
+import time
+import numpy as np
+
+
+def serial_port_scan():
+    available_ports = glob.glob('/dev/ttyACM*')
+    return available_ports
+
+def print_values(values):
+    print(values[0:1])
+
+
+class ReadFromArduino(object):
+    def __init__(self, port, SIZE_STRUCT=6:
+        self.port = port
+        self.SIZE_STRUCT = SIZE_STRUCT
+        self.latest_values = -1
+        self.port.flushInput()
+
+    def read_one_value(self):
+        #Wait for next serial message from the Arduino, read the whole message as a structure
+        read = False
+
+        while not read:
+            myByte = self.port.read(1)
+            if myByte == '{':
+                data = self.port.read(self.SIZE_STRUCT)
+                myByte = self.port.read(1)
+                if myByte == '}':
+                    # is  a valid message struct
+                    new_values = struct.unpack('<if', data)
+                    read = True
+
+                    self.latest_values = np.array(new_values)
+
+                    print_values(new_values)
+
+                    return(True)
+
+        return(False)
