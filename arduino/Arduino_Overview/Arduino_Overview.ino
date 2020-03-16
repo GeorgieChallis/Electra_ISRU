@@ -385,7 +385,7 @@ float getLightLevel(){
   // Get rough light level from LDR
   voltageLDR = analogRead(LIGHT_LEVEL) * (5.0 / 1024.0); // 5V input across 1024 ADC levels
   float resistanceLDR = (5.0*R3 / voltageLDR) - R3;
-  lux = (500 / resistanceLDR)/1000;
+  lux = (500 / (resistanceLDR/1000));
   Serial.println(lux);
   return lux;  
 }
