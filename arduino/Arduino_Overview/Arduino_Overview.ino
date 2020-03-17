@@ -1,7 +1,6 @@
 //Basic program flow for ISRU control (Arduino)
 
-// Updated: 06/03/2020, 18:31, GC/FG
-
+// Last updated: 17/03/2020, 16:18, GC
 //-------------------------------------------------------------
 
 //CHECK PIN CAPABILITES
@@ -28,38 +27,35 @@
 #define BUS_VOLTAGE 6
 #define ELECTRO_CURRENT 7
 #define SOLAR_CURRENT 8
-#define LIGHT_LEVEL A11
+#define LIGHT_LEVEL 11
 
-//Global Variables -----------------------------
+//Global Variables ------------------------------------
+//-----------------------------------------------------
 
-//Comms
-//Use these if only using simple command numbers
+//Comms using simple command numbers
+
+//Incoming:
+char command;
 char incomingChar = '0';
 String incomingString;
 String completeString;
-bool initialise = false;
-
 bool newCommand = false;
-char command;
 
-// Return message: XX,XX,[][][][]...;
+// Outgoing: XX,XX,[][][][]...;
 struct returnMessage{
-  uint8_t commandRecvd;
+  char commandRecvd;
   uint8_t  numValsReturned;
-  //byte data[];
+  uint32_t data[];
 };
 
-static struct returnMessage myMessageOut;
-//outgoing
-uint8_t numVals;
+static returnMessage myMessageOut;
 
-
-//Circuit control
+//Circuit control:
 static bool magnetOn = true;
 static bool heaterOn= false;
 static bool electroOn = false;
 
-// Temperature probes
+// Temperature - Thermistor, PT100
 float reactionTemp;
 float coeffA1 = 2.1085081e-03; //Steinhart-Hart A,B,C Coefficients (thermistor)
 float coeffB1 = 0.7979204e-04;
@@ -68,29 +64,31 @@ int reactionVIn; // Voltage in from thermistor changes
 float reactionR; //thermistor resistance
 int R1; //Voltage divider resistor value - reaction
 
-double heaterTemp;
-double coeffA2; //Steinhart-Hart A,B,C Coefficients (thermistor)
-double coeffB2;
-double coeffC2; 
+float heaterTemp;
+float coeffA2; //Steinhart-Hart A,B,C Coefficients (RTD)
+float coeffB2;
+float coeffC2; 
 int R2; //Voltage divider resistor value - heaters
 
+// Light Level
 int LDRval;
 
 // Voltage/ current monitoring
-double batteryCurrent;
-double batteryVoltage;
-double busVoltage;
-double solarCurrent;
-double electroCurrent;
+float batteryCurrent;
+float batteryVoltage;
+float busVoltage;
+float solarCurrent;
+float electroCurrent;
 
 // Gas monitoring
-//double hydrogenPPM;
-//double gasFlow;
+//float hydrogenPPM;
+//float gasFlow;
 
 //camera servo
-double servoRotation;
+float servoRotation;
 
-//Set up is called once on start-up
+// Setup ---------------------------------------
+//----------------------------------------------
 void setup(){
 //  currentState = initialising;
   
@@ -122,7 +120,6 @@ void setup(){
       incomingChar = Serial.read();
       delay(250);
   }
-  initialise = true;
   
   //Gets to here once hello! is received
   digitalWrite(RED, LOW);
@@ -130,13 +127,15 @@ void setup(){
 
 }
 
-//Loop operates continuously when the program runs
+
+// Loop ---------------------------------------------
+//---------------------------------------------------
 void loop(){
     //-----Get the most recent sensor values
     UpdateValues();
 
-    //----------Receive Data
-    while(Serial.available() && !newCommand && initialise){
+    //----------Receive Commands
+    while(Serial.available() && !newCommand){
        incomingChar = Serial.read();
        if (incomingChar == ';'){
          completeString = incomingString;
@@ -156,52 +155,50 @@ void loop(){
 
     //--------Process request
     if(newCommand){
-        processCommands(command);
+        processCommands(command); //Switch statement
         newCommand = false;
         command = 0;
         digitalWrite(ORANGE, LOW);
     }
-    
-/*    if (command != 1 && command != 2){
-    //--------Send full packet of info
-    sendAllData();
-    }*/
 }
 
+// Our functions -----------------------------------
+//--------------------------------------------------
 
 void UpdateValues(){
-  //Get ALL currently required values from sensors being used, regardless of state
+  //Get ALL current sensor values, regardless of state
+  getBatteryCurrent(); 
+  getBatteryVoltage(); 
+  getBusVoltage(); 
   
-  getBatteryCurrent(); //Always Needed
-  getBatteryVoltage(); //Always Needed
-  getBusVoltage(); //Always needed
+  getSolarCurrent(); 
+  getElectroCurrent(); 
   
-  getSolarCurrent(); //Always needed?
-  getElectroCurrent(); //Always needed? 
-  
-  getMeltingTemp();  //Needed for melting, electrolysis
-  
-  getReactionTemp(); //Needed for electrolysis 
+  getMeltingTemp(); 
+  getReactionTemp(); 
+  getLightLevel(); 
 }
   
   
 void processCommands(int command){
   //Get the command number from the data sent
+  myMessageOut.commandRecvd = command;
   switch(command){
     case'0':
-       // Whoops, you messed up... flash the orange LED!
+       // Whoops, error... flash the orange LED!
        flashLED(ORANGE);
        break;
 
     case 1:
-       // Get comms status of the board
        // Send Command number and TRUE (2 bytes)
-       sendReply(command);
+       myMessageOut.numValsReturned = 1;
+       myMessageOut.data[0] = 0b1;
+       //Serial.write(myMessageOut);
        break;
 
      case 2:
        // Get all data available
-       sendReply(command);
+       //sendReply(command);
       // sendAllData(); //***
        break;
 
@@ -209,58 +206,57 @@ void processCommands(int command){
        // Switch magnet
        switchFunction(MAGNET);
        magnetOn = !magnetOn;
-       sendReply(command);
+       myMessageOut.numValsReturned = 1;
+       myMessageOut.data[0] = (byte)magnetOn;
        break;
 
      case 4:
       // Switch heater
       switchFunction(HEATER);
       heaterOn = !heaterOn;
-      sendReply(command);
+      myMessageOut.numValsReturned = 1;
+      myMessageOut.data[0] = (byte)heaterOn;
       break;
 
       case 5:
       // Switch Electrolysis
       switchFunction(ELECTRO);
       electroOn = !electroOn;
-      Serial.print(electroOn);
-      sendReply(command);
+      myMessageOut.numValsReturned = 1;
+      myMessageOut.data[0] = (byte)electroOn;
       break;
 
       case 6:
       // Switch Red LED
       switchFunction(RED);
-      sendReply(command);
       break;
 
       case 7:
       //Switch Orange LED
       switchFunction(ORANGE);
-      sendReply(command);
       break;
 
       case 8:
       //Switch Green LED
       switchFunction(GREEN);
-      sendReply(command);
       break;
 
       case 9:
       //Get Magnet status
-      //***
-      sendReply(command);
+      myMessageOut.numValsReturned = 1;
+      myMessageOut.data[0] = (byte)magnetOn;
       break;
 
       case 10:
       //Get heater status
-      //**
-      sendReply(command);
+      myMessageOut.numValsReturned = 1;
+      myMessageOut.data[0] = (byte)heaterOn;
       break;
 
       case 11:
       //Get electrolysis status
-      //**
-      sendReply(command);
+      myMessageOut.numValsReturned = 1;
+      myMessageOut.data[0] = (byte)electroOn;
       break;
 
       case 12:
@@ -277,13 +273,13 @@ void processCommands(int command){
 
       case 14:
       //Get battery current
-      //**
+      //** TODO
       sendReply(command);
       break;
 
       case 15:
       //Get battery voltage
-      //**
+      //** TODO
       sendReply(command);
       break;
 
@@ -319,8 +315,7 @@ void processCommands(int command){
 
       case 21:
       //Get light level
-      LDRval = analogRead(LIGHT_LEVEL);
-      Serial.println(LDRval);
+      getLightLevel();
       break;
     
       default:
@@ -340,9 +335,7 @@ void sendAllData(){
   //Full data packet contains relevant data acquired for each 
 }
 
-// CIRCUIT CONTROL - OUTPUTS ------------------------------------------------------
-
-
+// CIRCUIT CONTROL - OUTPUTS --------------------------------------
 void flashLED(int pin){
   digitalWrite(pin, HIGH);
   delay(500);
@@ -358,11 +351,10 @@ void switchFunction(int pin){
 //Invert digital pin state - switch OFF if ON, vice versa
   digitalWrite(pin, !digitalRead(pin));
 }
-  
 
-// SENSOR DATA - INPUTS ---------------------------------------------------
   
-double getReactionTemp(){
+// SENSOR DATA - INPUTS ---------------------------------------------------
+float getReactionTemp(){
 // Read the temperature value of the reaction temperature probe
   //need to convert change in resistance/voltage to temperature
   R1 = 10000; // Other resistor value set to 10kohm
@@ -371,12 +363,10 @@ double getReactionTemp(){
   float logrR = log(reactionR);
   reactionTemp = 1.0 / (coeffA1 + coeffB1*logrR + coeffC1*logrR*logrR*logrR);  // Steinhart and Hart
   reactionTemp = reactionTemp - 273.15; //Kelvin to Celsius
-  //Serial.print(reactionTemp);
   return reactionTemp;
- 
 }
 
-double getMeltingTemp(){
+float getMeltingTemp(){
 // Read the temperature value of the filter temperature probe
     //Voltage divider used as above
     R2 = 10000; //Rough estimate for 10kohm resistor value
@@ -384,40 +374,47 @@ double getMeltingTemp(){
   return 0.0;
 }
 
-double getBatteryCurrent(){
+float getBatteryCurrent(){
 // Read the current from the ammeter on the ISRU battery
   
   return 0.0;
 }
 
-double getBatteryVoltage(){
+float getBatteryVoltage(){
 // Read the voltage from the ISRU battery
 
   return 0.0;
 }
 
-double getBusVoltage(){
+float getBusVoltage(){
  // Read value from bus voltmeter
 
    return 0.0;
 }
 
-double getSolarCurrent(){
+float getSolarCurrent(){
  // Read current value from solar panel ammeter  
 
   return 0.0;
 }
 
-double getElectroCurrent(){
+float getElectroCurrent(){
  // Get current value across electrodes 
  
   return 0.0;  
 }
 
+float getLightLevel(){
+  // Get rough light level from LDR
+  LDRval = analogRead(LIGHT_LEVEL);
+  Serial.println(LDRval);
+  return 0.0;  
+}
+
 
 //No longer used ---------------------
-double getHydrogenPPM(){ return 0.0;}
-double getGasFlow(){ return 0.0;}
+float getHydrogenPPM(){ return 0.0;}
+float getGasFlow(){ return 0.0;}
 
   
   
