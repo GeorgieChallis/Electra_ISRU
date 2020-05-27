@@ -1,11 +1,12 @@
 //Basic program flow for ISRU control (Arduino)
 
-// Last updated: 17/03/2020, 20:12, GC
+// Last updated: 27/05/2020, 20:12, GC
 //-------------------------------------------------------------
 
 //CHECK PIN CAPABILITES
 //Pin allocations 
 //Digital
+#define E_STOP 3
 #define RED 6
 #define ORANGE 7
 #define GREEN 8
@@ -79,9 +80,10 @@ float electroCurrent;
 // Setup ---------------------------------------
 //----------------------------------------------
 void setup(){
-//  currentState = initialising;
   
   //Initialise Digital Pins
+  pinMode(E_STOP, INPUT);
+  
   pinMode(RED, OUTPUT);
   pinMode(ORANGE, OUTPUT);
   pinMode(GREEN, OUTPUT);
@@ -91,6 +93,9 @@ void setup(){
   pinMode(ELECTRO, OUTPUT);
   
   pinMode(CAM_SERVO, OUTPUT);
+
+  //Attach button interrupt
+  attachInterrupt(0, eStop_ISR, FALLING);
   
   //Red LED ON indicates power is present
   digitalWrite(RED, HIGH);
@@ -202,6 +207,7 @@ void processCommands(int command){
 
      case 4:
       // Switch heater
+      digitalWrite(RED, HIGH);
       switchFunction(HEATER);
       heaterOn = !heaterOn;
       myMessageOut.data = heaterOn;
@@ -209,6 +215,7 @@ void processCommands(int command){
 
       case 5:
       // Switch Electrolysis
+      digitalWrite(RED, HIGH);
       switchFunction(ELECTRO);
       electroOn = !electroOn;
       myMessageOut.data = electroOn;
@@ -388,6 +395,16 @@ float getLightLevel(){
   lux = (500 / (resistanceLDR/1000));
   Serial.println(lux);
   return lux;  
+}
+
+//eStop Interrupt
+void eStop_ISR(){
+  digitalWrite(HEATER, LOW);
+  digitalWrite(ELECTRO, LOW); 
+  digitalWrite(RED, LOW);
+  digitalWrite(ORANGE, HIGH); 
+  heaterOn= false;
+  electroOn = false;
 }
 
 
