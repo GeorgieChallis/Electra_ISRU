@@ -7,11 +7,37 @@ import sys
 # Initialise Arduino Comms
 arduino_ok = False
 data = ""
+my_serial = serial.Serial('/dev/ttyACM0', timeout=1)
+
+def main():
+    global my_serial
+    arduino_thread = threading.Thread(target=init_arduino)
+    arduino_thread.start()
+
+    # do everything else we need to do to initialise...
+    # wait until these have finished before we are 'ready'
+    arduino_thread.join()
+
+    time.sleep(0.5)
+
+    if not arduino_ok:
+        print("Unable to connect to arduino :(")
+
+    else:
+        print("Connection to arduino established :)");
+        while True:
+            command = input("Please enter a command number:")
+            command += ";"
+            print(command)
+            my_serial.write(command.encode('utf-8'))
+
+    # mission GO
 
 def init_arduino():
     global arduino_ok
     global data
-    my_serial = serial.Serial('/dev/ttyACM0', timeout=1)
+    global my_serial
+    
     my_serial.baudrate = 115200
 
     time.sleep(1)
@@ -33,22 +59,5 @@ def init_arduino():
         i += 1
         time.sleep(0.2)
 
-arduino_thread = threading.Thread(target=init_arduino)
-
-arduino_thread.start()
-
-# do everything else we need to do to initialise
-
-# wait until these have finished before we are 'ready'
-arduino_thread.join()
-
-time.sleep(0.5)
-
-if arduino_ok:
-    print("Connection to arduino established :)");
-
-
-else:
-    print("Unable to connect to arduino :(")
-
-# mission GO
+if __name__ == "__main__":
+    main()
