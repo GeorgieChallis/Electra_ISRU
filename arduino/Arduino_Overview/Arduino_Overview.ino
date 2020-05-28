@@ -98,7 +98,7 @@ void setup(){
   attachInterrupt(0, eStop_ISR, FALLING);
   
   //Red LED ON indicates power is present
-  digitalWrite(RED, HIGH);
+  digitalWrite(RED, HIGH);  
   
   //Attempt communication with Pi
   Serial.begin(115200); //Start Serial comms (baud rate)
@@ -149,13 +149,14 @@ void loop(){
 
     //--------Process request
     if(newCommand){
-        processCommands(command); 
-        Serial.write('{');
+        processCommands(command);
+        Serial.write(command); 
+       /* Serial.write('{');
         Serial.write((uint8_t *)&myMessageOut, msgLen);
         Serial.write('{');
         newCommand = false;
         command = 0;
-        digitalWrite(ORANGE, LOW);
+        digitalWrite(ORANGE, LOW);*/
     }
 }
 
