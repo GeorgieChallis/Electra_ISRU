@@ -9,8 +9,9 @@ Primary ISRU control via Raspberry Pi 4. Receives commands and sends simple comm
 
 Single interrupt function connected to a push button acts a an emergency stop to halt dangerous functions like melting and electrolysis until manually re-started.
 
-<img src="https://github.com/GeorgieChallis/electra_ISRU/blob/dev-gc/arduino/Flow.jpg" width="320">
-
+<p align="center">
+  <img src="https://github.com/GeorgieChallis/electra_ISRU/blob/dev-gc/arduino/Flow.jpg" width="420"/>
+</p>
 ### Pi
 
 
