@@ -1,6 +1,7 @@
 //Basic program flow for ISRU control (Arduino)
 
-// Last updated: 27/05/2020, 20:12, GC
+// Last updated: 31/05/2020, 19:50, GC
+// * Change command input processing
 //-------------------------------------------------------------
 
 //CHECK PIN CAPABILITES
@@ -36,7 +37,7 @@
 //Comms using simple command numbers
 
 //Incoming:
-char command;
+int command;
 char incomingChar = '0';
 String incomingString;
 String completeString;
@@ -95,7 +96,7 @@ void setup(){
   pinMode(CAM_SERVO, OUTPUT);
 
   //Attach button interrupt
-  attachInterrupt(0, eStop_ISR, FALLING);
+  attachInterrupt(0, eStop_ISR, HIGH);
   
   //Red LED ON indicates power is present
   digitalWrite(RED, HIGH);  
@@ -118,6 +119,7 @@ void setup(){
   //Gets to here once hello! is received
   digitalWrite(RED, LOW);
   digitalWrite(GREEN, HIGH); 
+  Serial.println("Connection ready.");
 
 }
 
@@ -131,32 +133,34 @@ void loop(){
     //----------Receive Commands
     while(Serial.available() && !newCommand){
        incomingChar = Serial.read();
+       
        if (incomingChar == ';'){
          completeString = incomingString;
-         if(command = completeString.toInt()){
+         command = completeString.toInt();
           newCommand = true; 
+          Serial.print("New command: ");
+          Serial.println(command);
           digitalWrite(ORANGE, HIGH);
-         }
-         incomingString = "";
+          incomingString = "";
         }
        
-       else {
-        if (isDigit(incomingChar)){
-          incomingString += incomingChar;
-         }
+       else if (incomingChar > 47 && incomingChar < 58) {
+          incomingString += (incomingChar - '0');
+          Serial.write("str:");
+          Serial.print(incomingString);
        }
     }
 
     //--------Process request
     if(newCommand){
         processCommands(command);
-        Serial.write(command); 
+        Serial.write("Command!"); 
        /* Serial.write('{');
         Serial.write((uint8_t *)&myMessageOut, msgLen);
-        Serial.write('{');
+        Serial.write('{');*/
         newCommand = false;
         command = 0;
-        digitalWrite(ORANGE, LOW);*/
+        digitalWrite(ORANGE, LOW);
     }
 }
 
@@ -394,18 +398,20 @@ float getLightLevel(){
   voltageLDR = analogRead(LIGHT_LEVEL) * (5.0 / 1024.0); // 5V input across 1024 ADC levels
   float resistanceLDR = (5.0*R3 / voltageLDR) - R3;
   lux = (500 / (resistanceLDR/1000));
-  Serial.println(lux);
+  //Serial.println(lux);
   return lux;  
 }
 
 //eStop Interrupt
 void eStop_ISR(){
-  digitalWrite(HEATER, LOW);
+  Serial.println("ESTOP PRESSED!");
+  /*digitalWrite(HEATER, LOW);
   digitalWrite(ELECTRO, LOW); 
   digitalWrite(RED, LOW);
   digitalWrite(ORANGE, HIGH); 
   heaterOn= false;
   electroOn = false;
+  Serial.println("ESTOP PRESSED!");*/
 }
 
 
