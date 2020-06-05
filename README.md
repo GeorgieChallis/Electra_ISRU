@@ -10,6 +10,6 @@ Primary ISRU control via Raspberry Pi 4. Receives commands and sends simple comm
 `Arduino_Overview.ino`: `Setup` initialises comms by echoing "hello!" over Serial port. Once connection has been established, wait for a command number and execute in `loop`. Interrupt function connected to a push button acts a an emergency stop to halt dangerous functions like melting and electrolysis until manually re-started.
 
 ### Raspberry Pi
-[Install Instructions]()
+[Install Instructions](https://github.com/GeorgieChallis/electra_ISRU/blob/master/pi/README.md)
 
 
