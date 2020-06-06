@@ -96,7 +96,7 @@ void setup(){
   pinMode(CAM_SERVO, OUTPUT);
 
   //Attach button interrupt
-  attachInterrupt(0, eStop_ISR, HIGH);
+  attachInterrupt(0, eStop_ISR, FALLING);
   
   //Red LED ON indicates power is present
   digitalWrite(RED, HIGH);  
