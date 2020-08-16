@@ -1,7 +1,6 @@
 //Basic program flow for ISRU control (Arduino)
 
-// Last updated: 31/05/2020, 19:50, GC
-// * Change command input processing
+// Last updated: 06/06/2020, 10:10, GC
 //-------------------------------------------------------------
 
 //CHECK PIN CAPABILITES
@@ -154,10 +153,10 @@ void loop(){
     //--------Process request
     if(newCommand){
         processCommands(command);
-        Serial.write("Command!"); 
-       /* Serial.write('{');
-        Serial.write((uint8_t *)&myMessageOut, msgLen);
-        Serial.write('{');*/
+        Serial.write(command); 
+        Serial.write('{');
+        //Serial.write((uint8_t *)&myMessageOut, msgLen);
+        Serial.write('}');
         newCommand = false;
         command = 0;
         digitalWrite(ORANGE, LOW);
@@ -405,13 +404,12 @@ float getLightLevel(){
 //eStop Interrupt
 void eStop_ISR(){
   Serial.println("ESTOP PRESSED!");
-  /*digitalWrite(HEATER, LOW);
+  digitalWrite(HEATER, LOW);
   digitalWrite(ELECTRO, LOW); 
   digitalWrite(RED, LOW);
   digitalWrite(ORANGE, HIGH); 
   heaterOn= false;
   electroOn = false;
-  Serial.println("ESTOP PRESSED!");*/
 }
 
 
