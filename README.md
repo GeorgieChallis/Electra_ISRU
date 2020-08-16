@@ -1,8 +1,8 @@
 # electra_ISRU
-The F.O.R.G.E. is an In-Situ Resource Utilisation unit intended to deploy a [G.I.M.L.I. rover](https://github.com/GeorgieChallis/electra_Rover) from a lander, accept unfiltered ice deposits and process them into hydrogen and oxygen for use in further missions. 
+The F.O.R.G.E. (Future-mission Oxygen Resource Generation Equipment) is an In-Situ Resource Utilisation unit intended to deploy a [G.I.M.L.I. (Gathering Instrument for Martian and Lunar Ice) rover](https://github.com/GeorgieChallis/electra_Rover) from a lander, accept unfiltered ice deposits and process them into oxygen for use in further planetary missions. 
 
 ## System Overview
-Primary ISRU control via Raspberry Pi 4. Receives commands and sends simple command number (#0 - 32) to an Arduino to integrate with analogue sensors.
+Primary ISRU control is achieved via Raspberry Pi 4. This receives commands over WiFi and either sends simple command number (#0 - 32) to an Arduino for analogue sensor/actuator instrumentation or act as relay to pass messages to the exploring rover.
 
 ### Arduino
 [Install Instructions](https://github.com/GeorgieChallis/electra_ISRU/blob/master/arduino/README.md)
