@@ -1,6 +1,6 @@
-//Basic program flow for ISRU control (Arduino)
+//ISRU Control (Arduino)
 
-// Last updated: 06/06/2020, 10:10, GC
+// Last updated: 17/08/2020, 23:42, GC
 //-------------------------------------------------------------
 
 //CHECK PIN CAPABILITES
@@ -18,8 +18,6 @@
 #define CAM_SERVO 12
 
 //Analogue
-//#define H2 0
-//#define FLOW 1 
 #define REACT_TEMP 2
 #define MELT_TEMP 3
 
@@ -29,6 +27,8 @@
 #define ELECTRO_CURRENT 7
 #define SOLAR_CURRENT 8
 #define LIGHT_LEVEL 11
+//#define H2 0
+//#define FLOW 1 
 
 //Global Variables ------------------------------------
 //-----------------------------------------------------
@@ -167,14 +167,14 @@ void loop(){
 
 void UpdateValues(){
   //Get ALL current sensor values, regardless of state
+  getMeltingTemp(); 
+  getReactionTemp(); 
+  getLightLevel(); 
   /*getBatteryCurrent(); 
   getBatteryVoltage(); 
   getBusVoltage(); 
   getSolarCurrent(); 
   getElectroCurrent(); */
-  getMeltingTemp(); 
-  getReactionTemp(); 
-  getLightLevel(); 
 }
   
   
@@ -206,63 +206,74 @@ void processCommands(int command){
        break;
 
      case 4:
-      // Switch heater
-      digitalWrite(RED, HIGH);
-      switchFunction(HEATER);
-      heaterOn = !heaterOn;
-      myMessageOut.data = heaterOn;
-      break;
+        // Switch heater
+        digitalWrite(RED, HIGH);
+        switchFunction(HEATER);
+        heaterOn = !heaterOn;
+        myMessageOut.data = heaterOn;
+        break;
 
       case 5:
-      // Switch Electrolysis
-      digitalWrite(RED, HIGH);
-      switchFunction(ELECTRO);
-      electroOn = !electroOn;
-      myMessageOut.data = electroOn;
-      break;
+        // Switch Electrolysis
+        digitalWrite(RED, HIGH);
+        switchFunction(ELECTRO);
+        electroOn = !electroOn;
+        myMessageOut.data = electroOn;
+        break;
 
       case 6:
-      // Switch Red LED
-      switchFunction(RED);
-      myMessageOut.data = digitalRead(RED);
-      break;
+        // Switch Red LED
+        switchFunction(RED);
+        myMessageOut.data = digitalRead(RED);
+        break;
 
       case 7:
-      //Switch Orange LED
-      switchFunction(ORANGE);
-      myMessageOut.data = digitalRead(ORANGE);
-      break;
+        //Switch Orange LED
+        switchFunction(ORANGE);
+        myMessageOut.data = digitalRead(ORANGE);
+        break;
 
       case 8:
-      //Switch Green LED
-      switchFunction(GREEN);
-      myMessageOut.data = digitalRead(GREEN);
-      break;
+        //Switch Green LED
+        switchFunction(GREEN);
+        myMessageOut.data = digitalRead(GREEN);
+        break;
 
       case 9:
-      //Get Magnet status
-      myMessageOut.data = magnetOn;
-      break;
+        //Get Magnet status
+        myMessageOut.data = magnetOn;
+        break;
 
       case 10:
-      //Get heater status
-      myMessageOut.data = heaterOn;
-      break;
+        //Get heater status
+        myMessageOut.data = heaterOn;
+        break;
 
       case 11:
-      //Get electrolysis status
-      myMessageOut.data = electroOn;
-      break;
+        //Get electrolysis status
+        myMessageOut.data = electroOn;
+        break;
 
       case 12:
-      //Get reaction temperature
-      myMessageOut.data = getReactionTemp();
-      break;
+        //Get reaction temperature
+        myMessageOut.data = getReactionTemp();
+        break;
 
       case 13:
-      //Get melting temperature
-      myMessageOut.data = getMeltingTemp();
-      break;
+        //Get melting temperature
+        myMessageOut.data = getMeltingTemp();
+        break;
+
+      case 21:
+        //Get light level
+        myMessageOut.data = getLightLevel();
+        break;
+    
+      default:
+      //Unexpected command number -> error
+        flashLED(ORANGE);
+        myMessageOut.data = -1;
+        break;
 
       /* case 14:
       //Get battery current
@@ -296,17 +307,6 @@ void processCommands(int command){
       case 20:
       //Get gas flow - NOT USED
       break; */
-
-      case 21:
-      //Get light level
-      myMessageOut.data = getLightLevel();
-      break;
-    
-      default:
-      //Unexpected command number -> error
-        flashLED(ORANGE);
-        myMessageOut.data = -1;
-        break;
     }
 }
 
@@ -376,7 +376,6 @@ void eStop_ISR(){
   digitalWrite(GREEN, LOW);
   digitalWrite(ORANGE, HIGH); 
 }
-
 
 //No longer used ---------------------
 float getHydrogenPPM(){ return 0.0;}
