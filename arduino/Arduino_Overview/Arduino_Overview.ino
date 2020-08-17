@@ -43,9 +43,9 @@ String completeString;
 bool newCommand = false;
 
 // Outgoing: XX,[][][][];
-struct returnMessage{
+static struct returnMessage{
   uint8_t commandRecvd; //8
-  uint32_t data; //32 
+  float data; //
 } myMessageOut;
 
 int msgLen = sizeof(myMessageOut);
@@ -87,11 +87,9 @@ void setup(){
   pinMode(RED, OUTPUT);
   pinMode(ORANGE, OUTPUT);
   pinMode(GREEN, OUTPUT);
-  
   pinMode(MAGNET, OUTPUT);
   pinMode(HEATER, OUTPUT);
   pinMode(ELECTRO, OUTPUT);
-  
   pinMode(CAM_SERVO, OUTPUT);
 
   //Attach button interrupt
@@ -114,6 +112,10 @@ void setup(){
       incomingChar = Serial.read();
       delay(250);
   }
+
+  //Intiialise struct members
+  myMessageOut.commandRecvd = 0;
+  myMessageOut.data = -1;
   
   //Gets to here once hello! is received
   digitalWrite(RED, LOW);
@@ -137,26 +139,23 @@ void loop(){
          completeString = incomingString;
          command = completeString.toInt();
           newCommand = true; 
-          Serial.print("New command: ");
-          Serial.println(command);
           digitalWrite(ORANGE, HIGH);
           incomingString = "";
         }
        
        else if (incomingChar > 47 && incomingChar < 58) {
           incomingString += (incomingChar - '0');
-          Serial.write("str:");
-          Serial.print(incomingString);
        }
     }
 
     //--------Process request
     if(newCommand){
         processCommands(command);
-        Serial.write(command); 
-        Serial.write('{');
-        //Serial.write((uint8_t *)&myMessageOut, msgLen);
-        Serial.write('}');
+        Serial.print('{');
+        Serial.print(command); 
+        Serial.print(": ");
+        Serial.print(myMessageOut.data);
+        Serial.println('}');
         newCommand = false;
         command = 0;
         digitalWrite(ORANGE, LOW);
@@ -168,13 +167,11 @@ void loop(){
 
 void UpdateValues(){
   //Get ALL current sensor values, regardless of state
-  getBatteryCurrent(); 
+  /*getBatteryCurrent(); 
   getBatteryVoltage(); 
   getBusVoltage(); 
-  
   getSolarCurrent(); 
-  getElectroCurrent(); 
-  
+  getElectroCurrent(); */
   getMeltingTemp(); 
   getReactionTemp(); 
   getLightLevel(); 
@@ -185,9 +182,9 @@ void processCommands(int command){
   //Get the command number from the data sent
   myMessageOut.commandRecvd = command;
   switch(command){
-    case'0':
+    case 0:
        // Whoops, error... flash the orange LED!
-       myMessageOut.data = 0;
+       myMessageOut.data = -1;
        flashLED(ORANGE);
        break;
 
@@ -198,8 +195,7 @@ void processCommands(int command){
 
      case 2:
        // Get all data available
-       //
-      // sendAllData(); //***
+       myMessageOut.data = 0;
        break;
 
      case 3:
@@ -228,16 +224,19 @@ void processCommands(int command){
       case 6:
       // Switch Red LED
       switchFunction(RED);
+      myMessageOut.data = digitalRead(RED);
       break;
 
       case 7:
       //Switch Orange LED
       switchFunction(ORANGE);
+      myMessageOut.data = digitalRead(ORANGE);
       break;
 
       case 8:
       //Switch Green LED
       switchFunction(GREEN);
+      myMessageOut.data = digitalRead(GREEN);
       break;
 
       case 9:
@@ -265,7 +264,7 @@ void processCommands(int command){
       myMessageOut.data = getMeltingTemp();
       break;
 
-      case 14:
+      /* case 14:
       //Get battery current
       //** TODO
       break;
@@ -296,7 +295,7 @@ void processCommands(int command){
 
       case 20:
       //Get gas flow - NOT USED
-      break;
+      break; */
 
       case 21:
       //Get light level
@@ -304,15 +303,11 @@ void processCommands(int command){
       break;
     
       default:
-        //Unexpected command number -> error
+      //Unexpected command number -> error
         flashLED(ORANGE);
-        myMessageOut.data = 0;
+        myMessageOut.data = -1;
         break;
     }
-}
-
-void sendAllData(){
-  //Full data packet contains relevant data acquired for each 
 }
 
 // CIRCUIT CONTROL - OUTPUTS --------------------------------------
@@ -359,63 +354,40 @@ float getMeltingTemp(){
     float coeffC2; 
     R2 = 10000; //10kohm resistor value TBC
     
-  return 0.0;
+  return 69.0;
 }
 
-float getBatteryCurrent(){
-// Read the current from the ammeter on the ISRU battery
-  
-  return 0.0;
-}
-
-float getBatteryVoltage(){
-// Read the voltage from the ISRU battery
-
-  return 0.0;
-}
-
-float getBusVoltage(){
- // Read value from bus voltmeter
-
-   return 0.0;
-}
-
-float getSolarCurrent(){
- // Read current value from solar panel ammeter  
-
-  return 0.0;
-}
-
-float getElectroCurrent(){
- // Get current value across electrodes 
- 
-  return 0.0;  
-}
 
 float getLightLevel(){
   // Get rough light level from LDR
-  voltageLDR = analogRead(LIGHT_LEVEL) * (5.0 / 1024.0); // 5V input across 1024 ADC levels
-  float resistanceLDR = (5.0*R3 / voltageLDR) - R3;
-  lux = (500 / (resistanceLDR/1000));
-  //Serial.println(lux);
-  return lux;  
+  voltageLDR = analogRead(LIGHT_LEVEL) * (100 / 1024.0); // Give a percentage input across 1024 ADC levels
 }
 
-//eStop Interrupt
+//eStop Interrupt is called when button is pressed
 void eStop_ISR(){
   Serial.println("ESTOP PRESSED!");
+  //Switch off heater and electrolysis
   digitalWrite(HEATER, LOW);
   digitalWrite(ELECTRO, LOW); 
-  digitalWrite(RED, LOW);
-  digitalWrite(ORANGE, HIGH); 
   heaterOn= false;
   electroOn = false;
+  
+  //Indicate emergency on LEDs
+  digitalWrite(GREEN, LOW);
+  digitalWrite(ORANGE, HIGH); 
 }
 
 
 //No longer used ---------------------
 float getHydrogenPPM(){ return 0.0;}
 float getGasFlow(){ return 0.0;}
+//Not yet implemented ----------------
+float getBatteryCurrent(){ return 0.0;}
+float getBatteryVoltage(){ return 0.0; }
+float getBusVoltage(){ return 0.0; }
+float getSolarCurrent(){ return 0.0; }
+float getElectroCurrent(){ return 0.0;  }
+void sendAllData(){}
 
   
   
