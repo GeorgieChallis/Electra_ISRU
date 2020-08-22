@@ -138,6 +138,7 @@ void loop(){
        if (incomingChar == ';'){
          completeString = incomingString;
          command = completeString.toInt();
+	  myMessageOut.commandRecvd = command;
           newCommand = true; 
           digitalWrite(ORANGE, HIGH);
           incomingString = "";
@@ -151,11 +152,12 @@ void loop(){
     //--------Process request
     if(newCommand){
         processCommands(command);
-        Serial.print('{');
-        Serial.print(command); 
-        Serial.print(": ");
+        // Output in format {Command#: ValueAsASCII}
+        Serial.write(0x7b);
+        Serial.write(myMessageOut.commandRecvd); 
+        Serial.write(0x3a);
         Serial.print(myMessageOut.data);
-        Serial.println('}');
+        Serial.write(0x7d);
         newCommand = false;
         command = 0;
         digitalWrite(ORANGE, LOW);

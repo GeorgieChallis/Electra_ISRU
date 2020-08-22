@@ -249,9 +249,9 @@
             this.label42.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label42.Location = new System.Drawing.Point(303, 96);
             this.label42.Name = "label42";
-            this.label42.Size = new System.Drawing.Size(27, 13);
+            this.label42.Size = new System.Drawing.Size(13, 13);
             this.label42.TabIndex = 35;
-            this.label42.Text = "OFF";
+            this.label42.Text = "--";
             this.label42.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // label29
@@ -271,10 +271,11 @@
             this.label39.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label39.Location = new System.Drawing.Point(195, 96);
             this.label39.Name = "label39";
-            this.label39.Size = new System.Drawing.Size(27, 13);
+            this.label39.Size = new System.Drawing.Size(13, 13);
             this.label39.TabIndex = 33;
-            this.label39.Text = "OFF";
+            this.label39.Text = "--";
             this.label39.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.label39.Click += new System.EventHandler(this.label39_Click);
             // 
             // Yellow_Button
             // 
@@ -305,9 +306,9 @@
             this.label31.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label31.Location = new System.Drawing.Point(91, 96);
             this.label31.Name = "label31";
-            this.label31.Size = new System.Drawing.Size(23, 13);
+            this.label31.Size = new System.Drawing.Size(13, 13);
             this.label31.TabIndex = 26;
-            this.label31.Text = "ON";
+            this.label31.Text = "--";
             this.label31.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // Red_Button
@@ -370,9 +371,9 @@
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.Location = new System.Drawing.Point(300, 88);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(27, 13);
+            this.label3.Size = new System.Drawing.Size(13, 13);
             this.label3.TabIndex = 44;
-            this.label3.Text = "OFF";
+            this.label3.Text = "--";
             this.label3.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // label4
@@ -392,9 +393,9 @@
             this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label8.Location = new System.Drawing.Point(192, 88);
             this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(27, 13);
+            this.label8.Size = new System.Drawing.Size(13, 13);
             this.label8.TabIndex = 42;
-            this.label8.Text = "OFF";
+            this.label8.Text = "--";
             this.label8.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.label8.Click += new System.EventHandler(this.label8_Click);
             // 
@@ -427,9 +428,9 @@
             this.label10.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label10.Location = new System.Drawing.Point(88, 88);
             this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(27, 13);
+            this.label10.Size = new System.Drawing.Size(13, 13);
             this.label10.TabIndex = 39;
-            this.label10.Text = "OFF";
+            this.label10.Text = "--";
             this.label10.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // Magnet_Button
@@ -526,7 +527,7 @@
             this.light_text.Name = "light_text";
             this.light_text.Size = new System.Drawing.Size(19, 13);
             this.light_text.TabIndex = 43;
-            this.light_text.Text = "50";
+            this.light_text.Text = "----";
             this.light_text.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // temp_text
@@ -535,9 +536,9 @@
             this.temp_text.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.temp_text.Location = new System.Drawing.Point(46, 96);
             this.temp_text.Name = "temp_text";
-            this.temp_text.Size = new System.Drawing.Size(28, 13);
+            this.temp_text.Size = new System.Drawing.Size(19, 13);
             this.temp_text.TabIndex = 26;
-            this.temp_text.Text = "22.8";
+            this.temp_text.Text = "----";
             this.temp_text.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // GetLight_Button
