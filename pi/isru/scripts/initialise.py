@@ -73,10 +73,10 @@ def init_socket():
     conn.close()
 
 arduino_thread = threading.Thread(target=init_arduino)
-socket_thread = threading.Thread(target=init_socket)
+#socket_thread = threading.Thread(target=init_socket)
 
 arduino_thread.start()
-socket_thread.start()
+#socket_thread.start()
 
 # do everything else we need to do to initialise
 
