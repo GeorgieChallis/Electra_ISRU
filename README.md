@@ -12,4 +12,10 @@ Primary ISRU control is achieved via Raspberry Pi 4. This receives commands over
 ### Raspberry Pi
 [Install Instructions](https://github.com/GeorgieChallis/electra_ISRU/blob/master/pi/README.md)
 
+## Work Remaining
+1. Handle camera feeds efficiently
+2. Movement tracking
+3. Communications from GS
+4. Relay to Rover
+
 
