@@ -1,93 +1,24 @@
 ﻿using System;
 using System.Text;
 using System.Windows.Forms;
-using System.IO.Ports;
 using System.Threading;
+
+
 
 namespace ArduinoTester
 {
     public partial class GS : Form
     {
-        enum Command
-        {
-            ERROR = 0,
-            STATUS = 1,
-            ALL_DATA = 2,
-            SW_MAGNET = 3,
-            SW_HEATER = 4,
-            SW_ELECTRO = 5,
-            SW_RED = 6,
-            SW_YELLOW = 7,
-            SW_GREEN = 8,
-            RD_MAGNET = 9,
-            RD_HEATER = 10,
-            RD_ELECTRO = 11,
-            RD_TEMP_1 = 12,
-            RD_TEMP_2 = 13,
-            RD_LIGHT = 21,
-            RD_RED = 28,
-            RD_YELLOW = 29,
-            RD_GREEN = 30,
-            ESTOP    = 22
-            //Other commands not yet implemented in hardware
-        }
-
-        static SerialPort _serialPort;
+        Serial_Controller controller;
 
         public GS()
         {
             InitializeComponent();
+            controller = new Serial_Controller();
         }
 
         private void Form1_Load(object sender, EventArgs e) { }
 
-        private void panel1_Paint(object sender, PaintEventArgs e) { }
-
-        private void button17_Click(object sender, EventArgs e)
-        {
-            _serialPort = new SerialPort();
-            _serialPort.BaudRate = 115200;
-            try
-            {
-                _serialPort.PortName = textBox1.Text;
-                _serialPort.Open();
-
-            }
-            catch (Exception) { return; }
-            finally
-            {
-                if (_serialPort.IsOpen)
-                {
-                    _serialPort.DiscardInBuffer();
-                    _serialPort.Write("!");
-                    Thread.Sleep(250);
-
-                    EnableCommands(true);
-
-                    status_text.Text = "Connected";
-                }
-                else status_text.Text = "Connection Failed";
-            }
-        }
-
-        private void button3_Click(object sender, EventArgs e)
-        {
-            EnableCommands(false);
-            if (_serialPort.IsOpen) _serialPort.Close();
-            status_text.Text = "Disconnected";
-        }
-
-        private void GetTemp_Button_Click(object sender, EventArgs e)
-        {
-            String temperature = CheckDataReceived((int)Command.RD_TEMP_1);
-            if (temperature != "") temp_text.Text = temperature;
-        }
-
-        private void GetLight_Button_Click(object sender, EventArgs e)
-        {
-            String light = CheckDataReceived((int)Command.RD_LIGHT);
-            if (light != "") light_text.Text = light;
-        }
 
         private void Red_Button_Click(object sender, EventArgs e)
         {
@@ -126,49 +57,12 @@ namespace ArduinoTester
         }
 
         String CheckDataReceived(int expectedCommand)
-        {
-            if (!_serialPort.IsOpen)
-                return "";
+        {   
+            if (!controller.Connected) return "";
             else
             {
-                String sendString = expectedCommand.ToString() + ';';
-
-                _serialPort.DiscardInBuffer();
-                _serialPort.Write(sendString);
-
-                Thread.Sleep(100);
-
-                int totalBytes = _serialPort.BytesToRead;
-                if (totalBytes < 4) {
-                    Console.WriteLine("No data to read.");
-                    return "";
-                }
-
-                byte[] buffer = new byte[totalBytes];
-                _serialPort.Read(buffer, 0, totalBytes);
-
-                if (buffer[0] != 0x7b || buffer[2] != 0x3a) {
-                    Console.WriteLine("Wrong packet format.");
-                    return "";
-                }
-                else
-                {
-                    int recvdCommand = (int)buffer[1];
-                    if (recvdCommand != expectedCommand)  {
-                        Console.WriteLine("Command number does not match.");
-                        return "";
-                    }
-                    //process
-                    byte[] temp = new byte[totalBytes - 4];
-
-                    int j = 0;
-                    for (int i = 3; i < totalBytes-1; i++) {
-                        temp[j] = buffer[i];
-                        ++j;
-                    }
-
-                    return Encoding.Default.GetString(temp);
-                }
+                string output = controller.Send(expectedCommand);
+                return output;
             }
         }
 
@@ -211,7 +105,6 @@ namespace ArduinoTester
                 magnet_label.Text = "----";
                 heater_label.Text = "----";
                 electro_label.Text = "----";
-
                 temp_text.Text += "*";
                 light_text.Text += "*";
             }
@@ -219,9 +112,67 @@ namespace ArduinoTester
 
         private void Stop_Button_Click(object sender, EventArgs e)
         {
-            String heater = CheckDataReceived((int)Command.SW_HEATER);
+            String heater = CheckDataReceived((int)Command.ESTOP);
             Thread.Sleep(500);
             //Check that heater and electrolysis are off
+            float.TryParse(CheckDataReceived((int)Command.RD_MAGNET), out float state);
+            magnet_label.Text = (state < 1.0f) ? "OFF" : "ON";
+
+            float.TryParse(CheckDataReceived((int)Command.RD_HEATER), out state);
+            heater_label.Text = (state < 1.0f) ? "OFF" : "ON";
+
+            float.TryParse(CheckDataReceived((int)Command.RD_ELECTRO), out state);
+            electro_label.Text = (state < 1.0f) ? "OFF" : "ON";
+        }
+
+
+        private void Connect_Button_Click(object sender, EventArgs e)
+        {
+            controller.PortName = textBox1.Text;
+            controller.Connect();
+
+            if (controller.Connected)
+            {
+                EnableCommands(true);
+                status_text.Text = "Connected";
+            }
+            else status_text.Text = "Connection Failed";
+        }
+
+        private void Disconnect_Button_Click(object sender, EventArgs e)
+        {
+            controller.Disconnect();
+            if (controller.Connected) {
+                EnableCommands(false);
+                status_text.Text = "Disconnected";
+            }
+        }
+
+        private void GetTemp_Button_Click(object sender, EventArgs e)
+        {
+            String temperature = CheckDataReceived((int)Command.RD_TEMP_1);
+            if (temperature != "") temp_text.Text = temperature;
+        }
+
+        private void GetLight_Button_Click(object sender, EventArgs e)
+        {
+            String light = CheckDataReceived((int)Command.RD_LIGHT);
+            if (light != "") light_text.Text = light;
+        }
+
+        private void Connect_Button2_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void Disconnect_Button2_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void tabPage1_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }
