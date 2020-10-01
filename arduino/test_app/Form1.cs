@@ -9,12 +9,14 @@ namespace ArduinoTester
 {
     public partial class GS : Form
     {
-        Serial_Controller controller;
-
+        Serial_Controller serialController;
+        Wireless_Controller piController;
+        
         public GS()
         {
             InitializeComponent();
-            controller = new Serial_Controller();
+            serialController = new Serial_Controller();
+            piController = new Wireless_Controller();
         }
 
         private void Form1_Load(object sender, EventArgs e) { }
@@ -57,16 +59,17 @@ namespace ArduinoTester
         }
 
         String CheckDataReceived(int expectedCommand)
-        {   
-            if (!controller.Connected) return "";
+        {
+            if (!serialController.Connected) return "";
             else
             {
-                string output = controller.Send(expectedCommand);
+                string output = serialController.Send(expectedCommand);
                 return output;
             }
         }
 
-        void EnableCommands(bool connected) {
+        void EnableCommands(bool connected)
+        {
             Connect_Button.Enabled = !connected;
             Disconnect_Button.Enabled = connected;
             GetTemp_Button.Enabled = connected;
@@ -98,7 +101,8 @@ namespace ArduinoTester
                 electro_label.Text = (state < 1.0f) ? "OFF" : "ON";
             }
 
-            else {
+            else
+            {
                 red_label.Text = "----";
                 yellow_label.Text = "----";
                 green_label.Text = "----";
@@ -128,10 +132,10 @@ namespace ArduinoTester
 
         private void Connect_Button_Click(object sender, EventArgs e)
         {
-            controller.PortName = textBox1.Text;
-            controller.Connect();
+            serialController.PortName = textBox1.Text;
+            serialController.Connect();
 
-            if (controller.Connected)
+            if (serialController.Connected)
             {
                 EnableCommands(true);
                 status_text.Text = "Connected";
@@ -141,8 +145,9 @@ namespace ArduinoTester
 
         private void Disconnect_Button_Click(object sender, EventArgs e)
         {
-            controller.Disconnect();
-            if (controller.Connected) {
+            serialController.Disconnect();
+            if (serialController.Connected)
+            {
                 EnableCommands(false);
                 status_text.Text = "Disconnected";
             }
@@ -162,17 +167,27 @@ namespace ArduinoTester
 
         private void Connect_Button2_Click(object sender, EventArgs e)
         {
-
+            piController.Connect();
         }
 
         private void Disconnect_Button2_Click(object sender, EventArgs e)
         {
-
+            piController.Disconnect();
         }
 
-        private void tabPage1_Click(object sender, EventArgs e)
+        private void tabControl1_SelectedIndexChanged(object sender, EventArgs e)
         {
-
+            if (tabControl1.SelectedIndex == 0) // If arduino tab
+            {
+                piController.Disconnect();
+                EnableCommands(false);
+            }
+            else if (tabControl1.SelectedIndex == 1) // If Pi tab
+            {
+                serialController.Disconnect();
+                EnableCommands(false);
+            }
+            else Console.WriteLine("?");
         }
     }
 }
