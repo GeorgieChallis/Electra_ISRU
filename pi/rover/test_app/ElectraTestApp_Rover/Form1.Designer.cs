@@ -43,12 +43,12 @@
             this.Disclaimer = new System.Windows.Forms.Label();
             this.Connect = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.Disconnect = new System.Windows.Forms.Button();
             this.label3 = new System.Windows.Forms.Label();
             this.trackBar1 = new System.Windows.Forms.TrackBar();
             this.trackBar2 = new System.Windows.Forms.TrackBar();
             this.label4 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
-            this.Disconnect = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.trackBar1)).BeginInit();
@@ -101,6 +101,7 @@
             // 
             // Up
             // 
+            this.Up.Enabled = false;
             this.Up.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.Up.Location = new System.Drawing.Point(304, 118);
             this.Up.Name = "Up";
@@ -111,6 +112,7 @@
             // 
             // Down
             // 
+            this.Down.Enabled = false;
             this.Down.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.Down.Location = new System.Drawing.Point(304, 205);
             this.Down.Name = "Down";
@@ -121,6 +123,7 @@
             // 
             // Left
             // 
+            this.Left.Enabled = false;
             this.Left.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.Left.Location = new System.Drawing.Point(260, 161);
             this.Left.Name = "Left";
@@ -131,6 +134,7 @@
             // 
             // Right
             // 
+            this.Right.Enabled = false;
             this.Right.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.Right.Location = new System.Drawing.Point(348, 161);
             this.Right.Name = "Right";
@@ -142,6 +146,7 @@
             // Stop
             // 
             this.Stop.BackColor = System.Drawing.Color.Red;
+            this.Stop.Enabled = false;
             this.Stop.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.Stop.Location = new System.Drawing.Point(357, 270);
             this.Stop.Name = "Stop";
@@ -156,7 +161,7 @@
             this.textBox1.Name = "textBox1";
             this.textBox1.Size = new System.Drawing.Size(136, 20);
             this.textBox1.TabIndex = 22;
-            this.textBox1.Text = "192.168.1.71";
+            this.textBox1.Text = "192.168.43.71";
             this.textBox1.TextChanged += new System.EventHandler(this.textBox1_TextChanged);
             // 
             // label2
@@ -203,6 +208,16 @@
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = " ";
             // 
+            // Disconnect
+            // 
+            this.Disconnect.Enabled = false;
+            this.Disconnect.Location = new System.Drawing.Point(100, 121);
+            this.Disconnect.Name = "Disconnect";
+            this.Disconnect.Size = new System.Drawing.Size(75, 33);
+            this.Disconnect.TabIndex = 31;
+            this.Disconnect.Text = "Disconnect";
+            this.Disconnect.UseVisualStyleBackColor = true;
+            // 
             // label3
             // 
             this.label3.AutoSize = true;
@@ -216,14 +231,18 @@
             // 
             // trackBar1
             // 
+            this.trackBar1.Enabled = false;
             this.trackBar1.Location = new System.Drawing.Point(453, 138);
             this.trackBar1.Maximum = 2;
             this.trackBar1.Name = "trackBar1";
             this.trackBar1.Size = new System.Drawing.Size(152, 45);
             this.trackBar1.TabIndex = 27;
+            this.trackBar1.Value = 2;
+            this.trackBar1.Scroll += new System.EventHandler(this.trackBar1_Scroll);
             // 
             // trackBar2
             // 
+            this.trackBar2.Enabled = false;
             this.trackBar2.Location = new System.Drawing.Point(453, 219);
             this.trackBar2.Maximum = 2;
             this.trackBar2.Name = "trackBar2";
@@ -249,16 +268,6 @@
             this.label5.Size = new System.Drawing.Size(81, 13);
             this.label5.TabIndex = 30;
             this.label5.Text = "Ram Extension:";
-            // 
-            // Disconnect
-            // 
-            this.Disconnect.Enabled = false;
-            this.Disconnect.Location = new System.Drawing.Point(100, 121);
-            this.Disconnect.Name = "Disconnect";
-            this.Disconnect.Size = new System.Drawing.Size(75, 33);
-            this.Disconnect.TabIndex = 31;
-            this.Disconnect.Text = "Disconnect";
-            this.Disconnect.UseVisualStyleBackColor = true;
             // 
             // GS
             // 

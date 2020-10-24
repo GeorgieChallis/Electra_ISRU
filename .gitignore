@@ -1,1 +1,4 @@
 **/.DS_Store
+/pi/rover/test_app/ElectraTestApp_Rover/obj/*
+/pi/rover/test_app/ElectraTestApp_Rover/bin/Debug/*
+/pi/rover/test_app/ElectraTestApp_Rover/.vs/*
